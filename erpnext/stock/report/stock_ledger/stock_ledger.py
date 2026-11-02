@@ -10,7 +10,7 @@ from frappe import _
 from frappe.core.doctype.user_permission.user_permission import get_user_permissions
 from frappe.permissions import get_allowed_docs_for_doctype
 from frappe.query_builder.functions import IfNull, Sum
-from frappe.utils import cint, flt, get_datetime
+from frappe.utils import cint, flt, get_datetime, getdate
 from pypika import Order
 from pypika.analytics import RowNumber
 
@@ -25,9 +25,13 @@ from erpnext.stock.utils import (
 
 def execute(filters=None):
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	validate_date_range(filters)
 >>>>>>> 5fcdcf1 (fix(reports): validate report date ranges)
+=======
+	validate_filters(filters)
+>>>>>>> 41c39d6 (fix(stock): validate date range in stock ledger report)
 	is_reposting_item_valuation_in_progress()
 	include_uom = filters.get("include_uom")
 	columns = get_columns(filters)
@@ -157,6 +161,15 @@ def execute(filters=None):
 =======
 	return prepare_serial_batch_report(columns, data, serial_fields=("serial_no",))
 >>>>>>> 5fcdcf1 (fix(reports): validate report date ranges)
+
+
+def validate_filters(filters):
+	if (
+		filters.get("from_date")
+		and filters.get("to_date")
+		and getdate(filters.from_date) > getdate(filters.to_date)
+	):
+		frappe.throw(_("From Date must be before To Date"))
 
 
 def set_bundle_qty_and_value(sle, bundle_info):
