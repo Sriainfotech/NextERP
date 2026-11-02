@@ -13,8 +13,12 @@ from frappe.query_builder.functions import CombineDatetime, IfNull, Sum
 from frappe.core.doctype.user_permission.user_permission import get_user_permissions
 from frappe.permissions import get_allowed_docs_for_doctype
 from frappe.query_builder.functions import IfNull, Sum
+<<<<<<< HEAD
 >>>>>>> 5fcdcf1 (fix(reports): validate report date ranges)
 from frappe.utils import cint, flt, get_datetime
+=======
+from frappe.utils import cint, flt, get_datetime, getdate
+>>>>>>> 41c39d6 (fix(stock): validate date range in stock ledger report)
 from pypika import Order
 from pypika.analytics import RowNumber
 
@@ -29,9 +33,13 @@ from erpnext.stock.utils import (
 
 def execute(filters=None):
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	validate_date_range(filters)
 >>>>>>> 5fcdcf1 (fix(reports): validate report date ranges)
+=======
+	validate_filters(filters)
+>>>>>>> 41c39d6 (fix(stock): validate date range in stock ledger report)
 	is_reposting_item_valuation_in_progress()
 	include_uom = filters.get("include_uom")
 	columns = get_columns(filters)
@@ -148,6 +156,7 @@ def execute(filters=None):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def set_opening_row_for_inv_dimension(
 	inv_dimension_wise_dict, filters, inv_dimension_key=None, opening_row=None
 ):
@@ -166,6 +175,17 @@ def set_opening_row_for_inv_dimension(
 		new_key = copy.deepcopy(inv_dimension_key)
 		new_key.extend([filters.item_code[0], filters.warehouse[0]])
 =======
+=======
+def validate_filters(filters):
+	if (
+		filters.get("from_date")
+		and filters.get("to_date")
+		and getdate(filters.from_date) > getdate(filters.to_date)
+	):
+		frappe.throw(_("From Date must be before To Date"))
+
+
+>>>>>>> 41c39d6 (fix(stock): validate date range in stock ledger report)
 def set_bundle_qty_and_value(sle, bundle_info):
 	"""Keep only the qty and value of the filtered batch, as a bundle can hold other batches too."""
 	sle.actual_qty = sum(flt(row.qty) for row in bundle_info)
