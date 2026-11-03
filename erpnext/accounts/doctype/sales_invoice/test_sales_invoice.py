@@ -21,7 +21,18 @@ from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import Warehouse
 from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice import (
 	unlink_payment_on_cancel_of_invoice,
 )
+<<<<<<< HEAD
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_inter_company_transaction
+=======
+from erpnext.accounts.doctype.sales_invoice.mapper import make_inter_company_transaction
+from erpnext.accounts.doctype.sales_invoice.services.fixed_assets import FixedAssetService
+from erpnext.accounts.doctype.sales_invoice.services.pos import (
+	POSService,
+	get_all_mode_of_payments,
+	get_mode_of_payment_info,
+	get_mode_of_payments_info,
+)
+>>>>>>> 07061b8 (test: cover duplicate assets on sales invoices)
 from erpnext.accounts.utils import PaymentEntryUnlinkError
 from erpnext.assets.doctype.asset.depreciation import post_depreciation_entries
 from erpnext.assets.doctype.asset.test_asset import create_asset, create_asset_data
@@ -3650,12 +3661,17 @@ class TestSalesInvoice(FrappeTestCase):
 			self.assertEqual(expected_values[i][2], schedule.accumulated_depreciation_amount)
 			self.assertTrue(schedule.journal_entry)
 
+<<<<<<< HEAD
 	def test_depreciation_on_return_of_sold_asset(self):
 		from erpnext.controllers.sales_and_purchase_return import make_return_doc
 
 		create_asset_data()
 		asset = create_asset(item_code="Macbook Pro", calculate_depreciation=1, submit=1)
 		post_depreciation_entries(getdate("2021-09-30"))
+=======
+	def test_fixed_asset_sale_validations(self):
+		asset = create_asset(item_code="Macbook Pro", calculate_depreciation=0, submit=1)
+>>>>>>> 07061b8 (test: cover duplicate assets on sales invoices)
 
 		si = create_sales_invoice(
 			item_code="Macbook Pro", asset=asset.name, qty=1, rate=90000, posting_date=getdate("2021-09-30")
@@ -3684,6 +3700,7 @@ class TestSalesInvoice(FrappeTestCase):
 
 		create_asset_data()
 
+<<<<<<< HEAD
 		asset = create_asset(
 			item_code="Macbook Pro",
 			purchase_date="2020-01-01",
@@ -3702,6 +3719,63 @@ class TestSalesInvoice(FrappeTestCase):
 		return_si.submit()
 		return_si.reload()
 		return_si.cancel()
+=======
+	def test_fixed_asset_cannot_be_added_to_multiple_invoice_rows(self):
+		asset = create_asset(item_code="Macbook Pro", asset_quantity=2, calculate_depreciation=0, submit=1)
+		si = create_sales_invoice(
+			item_code="Macbook Pro", asset=asset.name, qty=1, rate=25000, do_not_save=True
+		)
+		si.items[0].is_fixed_asset = 1
+		si.append(
+			"items",
+			{
+				"item_code": "Macbook Pro",
+				"asset": asset.name,
+				"qty": 1,
+				"rate": 25000,
+				"income_account": "Sales - _TC",
+				"cost_center": "_Test Cost Center - _TC",
+			},
+		)
+		si.items[1].is_fixed_asset = 1
+
+		self.assertRaisesRegex(
+			frappe.ValidationError,
+			"Row #2: Asset .* is already added in another row",
+			si.insert,
+		)
+
+	def test_return_can_reference_asset_on_multiple_rows(self):
+		asset = create_asset(item_code="Macbook Pro", asset_quantity=2, calculate_depreciation=0, submit=1)
+		si = create_sales_invoice(
+			item_code="Macbook Pro",
+			asset=asset.name,
+			qty=1,
+			rate=25000,
+			is_return=1,
+			return_against="_Test Legacy Sales Invoice",
+			do_not_save=True,
+		)
+		si.items[0].is_fixed_asset = 1
+		si.append(
+			"items",
+			{
+				"item_code": "Macbook Pro",
+				"asset": asset.name,
+				"qty": 1,
+				"rate": 25000,
+				"income_account": "Sales - _TC",
+				"cost_center": "_Test Cost Center - _TC",
+			},
+		)
+		si.items[1].is_fixed_asset = 1
+
+		FixedAssetService(si).validate_fixed_asset()
+
+	def test_fixed_asset_restore_note_text(self):
+		asset = frappe._dict(doctype="Asset", name="_Test Asset For Note")
+		si = create_sales_invoice(do_not_save=True)
+>>>>>>> 07061b8 (test: cover duplicate assets on sales invoices)
 
 		asset.load_from_db()
 
